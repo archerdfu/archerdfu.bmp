@@ -1,6 +1,6 @@
 import os
 
-from construct import Padding, Const, Int32ul, Int16ul, GreedyRange, Bytes, Struct, this
+from construct import Padding, Const, Int32ul, Int16ul, GreedyRange, Bytes, Struct, this, If, Array, IfThenElse, Int8ul
 
 BIT24 = 24
 BIT32 = 32
@@ -30,13 +30,65 @@ BMP_HEADER = Struct(
     "dib_header" / DIB_HEADER
 )
 
+# BMP = Struct(
+#     *BMP_HEADER.subcons,
+#     'pixel_data' / GreedyRange(Bytes(this.dib_header.bits_per_pixel // 8))
+#     # 'pixel_data' / Array(
+#     #     lambda ctx: ctx.dib_header.image_size // (ctx.dib_header.bits_per_pixel // 8),
+#     #     Bit[this.dib_header.bits_per_pixel // 8])
+# )
+
+
+# Define a color palette entry structure
+ColorPaletteEntry = Struct(
+    "blue" / Int8ul,
+    "green" / Int8ul,
+    "red" / Int8ul,
+    "reserved" / Int8ul
+)
+
 BMP = Struct(
     *BMP_HEADER.subcons,
-    'pixel_data' / GreedyRange(Bytes(this.dib_header.bits_per_pixel // 8))
-    # 'pixel_data' / Array(
-    #     lambda ctx: ctx.dib_header.image_size // (ctx.dib_header.bits_per_pixel // 8),
-    #     Bit[this.dib_header.bits_per_pixel // 8])
+    "color_palette" / If(this.dib_header.bits_per_pixel == 8,
+                         Array(lambda ctx: ctx.header.dib_header.colors_in_palette, ColorPaletteEntry)),
+    "pixel_data" / IfThenElse(this.dib_header.bits_per_pixel == 8,
+                              GreedyRange(Int8ul),
+                              GreedyRange(Bytes(this.dib_header.bits_per_pixel // 8)))
 )
+
+# # Sample color palette and pixel data
+# color_palette = [
+#     {"blue": 0, "green": 0, "red": 0, "reserved": 0},  # Black
+#     {"blue": 255, "green": 255, "red": 255, "reserved": 0},  # White
+#     {"blue": 0, "green": 0, "red": 255, "reserved": 0},  # Red
+#     # Add more colors as needed
+# ]
+#
+# # Sample pixel data (indices into the color palette)
+# pixel_data = [0, 1, 2, 1, 0]  # Black, White, Red, White, Black
+# # Build the BMP data structure
+# bmp_data = BMP.build({
+#     "header": {
+#         "signature": b"BM",
+#         "file_size": 0,  # Set to actual size
+#         "pixel_data_offset": 0x36,  # Assuming no additional metadata before pixel data
+#         "dib_header": {
+#             "header_size": 40,
+#             "image_width": 2,  # Width of the image in pixels
+#             "image_height": 1,  # Height of the image in pixels
+#             "color_planes": 1,
+#             "bits_per_pixel": 8,  # 8-bit image
+#             "compression": 0,
+#             "image_size": 0,  # Can be set to 0 for uncompressed images
+#             "horizontal_resolution": 0,
+#             "vertical_resolution": 0,
+#             "colors_in_palette": len(color_palette),
+#             "important_colors": 0
+#         }
+#     },
+#     "color_palette": color_palette,
+#     "pixel_data": pixel_data
+# })
 
 
 def _create_bmp_headers(matrix, bits=24) -> (dict, dict):
@@ -88,9 +140,6 @@ def matrix_to_bmp(matrix: list[list[int]], filename: [str, os.PathLike], bits: i
         blue = pixel & 0xFF
         return bytes((blue, green, red, alpha))
 
-    # Convert the matrix of pixels to bytes
-    pixel_data = []
-
     if bits == 24:
         extract = extract_rgb
     elif bits == 32:
@@ -109,6 +158,7 @@ def matrix_to_bmp(matrix: list[list[int]], filename: [str, os.PathLike], bits: i
     bmp_data = {
         "header": header_data,
         "dib_header": dib_header_data,
+        "color_palette": None,
         "pixel_data": pixel_data,
     }
 

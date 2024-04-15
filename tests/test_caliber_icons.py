@@ -41,7 +41,7 @@ class TestCaliberIcons(unittest.TestCase):
         matrix_to_bmp(matrix, "../assets/640x480_32.bmp", 32)
 
     def test_icon_load(self):
-        matrix = bmp_to_matrix("../assets/16x16.bmp")
+        matrix = bmp_to_matrix("../assets/16.bmp")
         matrix_to_bmp(matrix, "../assets/icons.bmp", 24)
         self.assertEqual(len(matrix[0]), 16)
         self.assertEqual(len(matrix) % 16, 0)
