@@ -20,6 +20,10 @@ class TestCaliberIcons(unittest.TestCase):
 
         self.assertEqual(len(binicon), 2048)
 
+        with open('../assets/icon.bin', 'rb') as fp0:
+            with open('../assets/icon1.bin', 'rb') as fp1:
+                self.assertEqual(fp0.read(), fp1.read())
+
     def test_concat_icons(self):
         c = CaliberIcon()
         icons = (
@@ -31,6 +35,10 @@ class TestCaliberIcons(unittest.TestCase):
             fp.write(binicons)
 
         self.assertEqual(len(binicons), 4096)
+
+    def test_create_icon(self):
+        matrix = CaliberIcon.create_icon_matrix('338LM', 300)
+        matrix_to_bmp(matrix, "../assets/338LM-300gr.bmp")
 
     def test_other_size_conversion(self):
         matrix = bmp_to_matrix("../assets/640x480.bmp")

@@ -78,13 +78,16 @@ class CaliberIcon:
         weight_pxl = w_pad_pxl + cls.make_line(weight_txt) + w_pad_pxl
         delimiter_pxl = [cls.BLACK_ROW] * 2
 
-        pixels = caliber_pxl + delimiter_pxl + weight_pxl
-        return pixels
+        matrix = caliber_pxl + delimiter_pxl + weight_pxl
+        matrix.reverse()
+        return matrix
 
     @classmethod
     def matrix_to_icon(cls, matrix: list):
+        _matrix = matrix.copy()
+        _matrix.reverse()
         output = b''
-        for row in matrix:
+        for row in _matrix:
             line = b''.join([b'\x00' if p == cls.WHITE else b'\xC0' for p in row])
             output += line * 2
         return output
