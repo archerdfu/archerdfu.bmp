@@ -4,7 +4,10 @@ from importlib import metadata
 
 from archerdfu.bmp import CaliberIcon, matrix_to_bmp
 
-__version__ = metadata.version("archerdfu.bmp")
+try:
+    __version__ = metadata.version("archerdfu.bmp")
+except metadata.PackageNotFoundError:
+    __version__ = 'Unknown'
 
 
 def get_argparser():
@@ -68,6 +71,6 @@ if __name__ == "__main__":
 
     try:
         COMMANDLINE_ARGS, UNKNOWN = COMMANDLINE_PARSER.parse_known_args()
+        main(COMMANDLINE_ARGS)
     except Exception as exc:
         COMMANDLINE_PARSER.parse_known_args(('-h',))
-    main(COMMANDLINE_ARGS)
